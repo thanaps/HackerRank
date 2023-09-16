@@ -1,31 +1,31 @@
 SELECT
-    contest_id,
-    hacker_id,
-    name,
-    COALESCE(SUM(total_submissions), 0) AS total_submissions, 
-    COALESCE(SUM(total_accepted_submissions), 0) AS total_accepted_submissions,
-    COALESCE(SUM(total_views), 0) AS total_views,
-    COALESCE(SUM(total_unique_views), 0) AS total_unique_views
-FROM Contests
-LEFT JOIN Colleges USING(contest_id)
-LEFT JOIN Challenges USING(college_id)
+    con.contest_id,
+    con.hacker_id,
+    con.name,
+    SUM(ss.ts) AS ts, 
+    SUM(ss.ta) AS ta,
+    SUM(vs.tv) AS tv,
+    SUM(vs.tu) AS tu
+FROM Contests con
+INNER JOIN Colleges col USING(contest_id)
+INNER JOIN Challenges cha USING(college_id)
 LEFT JOIN (SELECT 
                 challenge_id,
-                SUM(total_views) AS total_views,
-                SUM(total_unique_views) AS total_unique_views
+                SUM(total_views) AS tv,
+                SUM(total_unique_views) AS tu
             FROM View_Stats 
             GROUP BY challenge_id) vs USING(challenge_id)
 LEFT JOIN (SELECT 
                 challenge_id,
-                SUM(total_submissions) AS total_submissions,
-                SUM(total_accepted_submissions) AS total_accepted_submissions
+                SUM(total_submissions) AS ts,
+                SUM(total_accepted_submissions) AS ta
             FROM Submission_Stats  
             GROUP BY challenge_id) ss USING(challenge_id)
-GROUP BY contest_id,
-        hacker_id,
-        name
-HAVING total_views
-    OR total_unique_views
-    OR total_submissions
-    OR total_accepted_submissions <> 0
-ORDER BY contest_id
+GROUP BY con.contest_id,
+        con.hacker_id,
+        con.name
+HAVING tv
+    OR tu
+    OR ts
+    OR ta <> 0
+ORDER BY con.contest_id
